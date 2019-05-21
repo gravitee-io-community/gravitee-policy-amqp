@@ -16,13 +16,22 @@
 package io.gravitee.plugins.rabbitmq;
 
 import io.vertx.amqpbridge.AmqpBridge;
+import io.vertx.amqpbridge.AmqpBridgeOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
+import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
+import io.vertx.core.eventbus.MessageProducer;
+import io.vertx.core.json.JsonObject;
 
-public class AmqpListener {
+public class AmqpSender {
     public static void main(String[] args) throws Exception {
-        AmqpBridge amqpBridge = AmqpBridge.create(Vertx.vertx());
+
+        AmqpBridgeOptions options = new AmqpBridgeOptions();
+        options.setReplyHandlingSupport(true);
+        AmqpBridge amqpBridge = AmqpBridge.create(Vertx.vertx(), options);
+
+
         amqpBridge.start("localhost", 5672, "test", "test", res -> {
 
             if (!res.succeeded()) {
@@ -33,11 +42,24 @@ public class AmqpListener {
             System.out.println("Connected !");
 
             // Set up a producer using the bridge, send a message with it.
-            MessageConsumer<Object> consumer = amqpBridge.createConsumer("/gravitee-api");
-            consumer.handler(message -> {
-                System.out.println("Sending reply !!");
-                message.reply("Hello AMQP !");
-            });
+            MessageProducer<JsonObject> producer = amqpBridge.createProducer("/gravitee-api");
+
+
+            try {
+                JsonObject amqpMsgPayload = new JsonObject();
+                JsonObject properties = new JsonObject();
+                properties.put("reply_to", "/gravitee-reply");
+                amqpMsgPayload.put("body", "myStringContent");
+                amqpMsgPayload.put("properties", properties);
+
+                //producer.deliveryOptions(new DeliveryOptions().addHeader("reply_to", "foobar"));
+                producer.send(amqpMsgPayload, repsonse -> {
+                    System.out.println(repsonse);
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
 
         });
     }

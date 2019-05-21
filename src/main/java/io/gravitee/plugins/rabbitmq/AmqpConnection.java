@@ -46,7 +46,7 @@ public class AmqpConnection implements ProxyConnection {
         Vertx vertx = executionContext.getComponent(Vertx.class);
 
         AmqpBridgeOptions bridgeOptions = new AmqpBridgeOptions();
-        this.amqpBridge = AmqpBridge.create(vertx);
+        this.amqpBridge = AmqpBridge.create(vertx, bridgeOptions);
     }
 
     @Override
