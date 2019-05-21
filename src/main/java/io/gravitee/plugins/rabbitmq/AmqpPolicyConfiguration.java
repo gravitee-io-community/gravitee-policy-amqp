@@ -16,59 +16,57 @@
 package io.gravitee.plugins.rabbitmq;
 
 import io.gravitee.policy.api.PolicyConfiguration;
-import io.gravitee.common.http.HttpMethod;
 
 @SuppressWarnings("unused")
 public class AmqpPolicyConfiguration implements PolicyConfiguration {
 
-    /**
-     * A String parameter
-     */
-    private String stringParam = "defaultValue";
+    private String queue = "gravitee-api";
 
-    /**
-     * A integer parameter
-     */
-    private int integerParam;
+    private String amqpServerHostname = "localhost";
 
-    /**
-     * A integer parameter
-     */
-    private boolean booleanParam;
+    private int amqpServerPort = 5762;
 
-    /**
-     * An enum parameter
-     */
-    private HttpMethod httpMethod;
+    private String amqpServerUsername = "guest";
 
-    /**
-     * Get the String parameter
-     *
-     * @return the String parameter
-     */
-    public String getStringParam() {
-        return stringParam;
+    private String amqpServerPassword = "guest";
+
+    public void setQueue(String queue) {
+        this.queue = queue;
     }
 
-    /**
-     * Get the integer parameter
-     *
-     * @return the integer parameter
-     */
-    public int getIntegerParam() {
-        return integerParam;
+    public void setAmqpServerHostname(String amqpServerHostname) {
+        this.amqpServerHostname = amqpServerHostname;
     }
 
-    /**
-     * Get the boolean parameter
-     *
-     * @return the boolean parameter
-     */
-    public boolean getBooleanParam() {
-        return booleanParam;
+    public void setAmqpServerPort(int amqpServerPort) {
+        this.amqpServerPort = amqpServerPort;
     }
 
-    public HttpMethod getHttpMethod() {
-        return httpMethod;
+    public void setAmqpServerPassword(String amqpServerPassword) {
+        this.amqpServerPassword = amqpServerPassword;
+    }
+
+    public void setAmqpServerUsername(String amqpServerUsername) {
+        this.amqpServerUsername = amqpServerUsername;
+    }
+
+    public String getQueue() {
+        return queue;
+    }
+
+    public int getAmqpServerPort() {
+        return amqpServerPort;
+    }
+
+    public String getAmqpServerHostname() {
+        return amqpServerHostname;
+    }
+
+    public String getAmqpServerPassword() {
+        return amqpServerPassword;
+    }
+
+    public String getAmqpServerUsername() {
+        return amqpServerUsername;
     }
 }

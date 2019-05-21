@@ -22,6 +22,7 @@ import io.gravitee.gateway.api.proxy.ProxyConnection;
 import io.gravitee.gateway.api.proxy.ProxyResponse;
 import io.gravitee.gateway.api.stream.WriteStream;
 import io.vertx.amqpbridge.AmqpBridge;
+import io.vertx.amqpbridge.AmqpBridgeOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
@@ -38,8 +39,13 @@ public class AmqpConnection implements ProxyConnection {
 
     private Handler<ProxyResponse> responseHandler;
 
-    AmqpConnection(ExecutionContext executionContext) {
+    private AmqpPolicyConfiguration configuration;
+
+    AmqpConnection(ExecutionContext executionContext, AmqpPolicyConfiguration configuration) {
+        this.configuration = configuration;
         Vertx vertx = executionContext.getComponent(Vertx.class);
+
+        AmqpBridgeOptions bridgeOptions = new AmqpBridgeOptions();
         this.amqpBridge = AmqpBridge.create(vertx);
     }
 
@@ -55,10 +61,17 @@ public class AmqpConnection implements ProxyConnection {
     @Override
     public void end() {
 
-        logger.info("Sending data ...");
+        logger.info("Sending connecting to amqp://{}:{}@{}:{}...",
+                configuration.getAmqpServerUsername(),
+                configuration.getAmqpServerPassword(),
+                configuration.getAmqpServerHostname(),
+                configuration.getAmqpServerPort());
 
         // Start the bridge, then use the event loop thread to process things thereafter.
-        amqpBridge.start("localhost", 8672, "test", "test", res -> {
+        amqpBridge.start(configuration.getAmqpServerHostname(),
+                         configuration.getAmqpServerPort(),
+                         configuration.getAmqpServerUsername(),
+                         configuration.getAmqpServerPassword(), res -> {
             if (!res.succeeded()) {
                 logger.error("Couldn't connect to AMQP server.");
                 return;
@@ -67,10 +80,11 @@ public class AmqpConnection implements ProxyConnection {
             logger.info("Connected !!");
 
             // Set up a producer using the bridge, send a message with it.
-            MessageProducer<JsonObject> producer = amqpBridge.createProducer("gravitee-api");
+            MessageProducer<JsonObject> producer = amqpBridge.createProducer(configuration.getQueue());
             JsonObject amqpMsgPayload = new JsonObject();
             amqpMsgPayload.put("body", "myStringContent");
 
+            logger.info("Sending message to queue: {}", configuration.getQueue());
             producer.send(amqpMsgPayload, response -> {
                 logger.info("Received {}", response.result().body());
                 responseHandler.handle(new AmqpProxyResponse(response));

@@ -24,10 +24,16 @@ import io.gravitee.gateway.api.stream.ReadStream;
 
 public class AmqpConnectionInvoker implements Invoker {
 
+    private AmqpPolicyConfiguration configuration;
+
+    AmqpConnectionInvoker(AmqpPolicyConfiguration configuration) {
+        this.configuration = configuration;
+    }
+
     @Override
     public void invoke(ExecutionContext executionContext, ReadStream<Buffer> readStream, Handler<ProxyConnection> connectionHandler) {
 
-        final AmqpConnection rabbitMQConnection = new AmqpConnection(executionContext);
+        final AmqpConnection rabbitMQConnection = new AmqpConnection(executionContext, configuration);
 
         // Return connection to backend
         connectionHandler.handle(rabbitMQConnection);

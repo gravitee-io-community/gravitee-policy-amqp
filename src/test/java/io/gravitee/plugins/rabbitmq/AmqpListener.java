@@ -35,6 +35,7 @@ public class AmqpListener {
             // Set up a producer using the bridge, send a message with it.
             MessageConsumer<Object> consumer = amqpBridge.createConsumer("gravitee-api");
             consumer.handler(message -> {
+                System.out.println("Sending reply !!");
                 message.reply("Hello AMQP !");
             });
 

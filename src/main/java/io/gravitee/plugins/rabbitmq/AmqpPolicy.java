@@ -44,7 +44,7 @@ public class AmqpPolicy {
     @OnRequest
     public void onRequest(Request request, Response response, ExecutionContext executionContext, PolicyChain policyChain) {
 
-        executionContext.setAttribute(ExecutionContext.ATTR_INVOKER, new AmqpConnectionInvoker());
+        executionContext.setAttribute(ExecutionContext.ATTR_INVOKER, new AmqpConnectionInvoker(configuration));
 
         // Finally continue chaining
         policyChain.doNext(request, response);
