@@ -23,24 +23,23 @@ import io.gravitee.gateway.api.proxy.ProxyResponse;
 import io.gravitee.gateway.api.stream.ReadStream;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.eventbus.Message;
+import io.vertx.ext.amqp.AmqpMessage;
 
 public class AmqpProxyResponse implements ProxyResponse {
 
     private Handler<Buffer> bodyHandler;
     private Handler<Void> endHandler;
 
-    private AsyncResult<Message<Object>> asyncResult;
+    private AmqpMessage asyncResult;
 
-    AmqpProxyResponse(AsyncResult<Message<Object>> asyncResult) {
+    AmqpProxyResponse(AmqpMessage asyncResult) {
         this.asyncResult = asyncResult;
     }
 
     @Override
     public int status() {
-        if (asyncResult.succeeded()) {
+        if (!asyncResult.isBodyNull()) {
             return 200;
-        } else if (asyncResult.failed()) {
-            return 500;
         }
 
         return 500;
@@ -67,10 +66,8 @@ public class AmqpProxyResponse implements ProxyResponse {
 
     @Override
     public ReadStream<Buffer> resume() {
-        if (asyncResult.succeeded()
-                && asyncResult.result() != null
-                && asyncResult.result().body() != null) {
-            this.bodyHandler.handle(Buffer.buffer(asyncResult.result().body().toString()));
+        if (!asyncResult.isBodyNull()) {
+            this.bodyHandler.handle(Buffer.buffer(asyncResult.bodyAsString()));
         }
 
         endHandler.handle(null);

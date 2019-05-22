@@ -33,7 +33,7 @@ public class AmqpConnectionInvoker implements Invoker {
     @Override
     public void invoke(ExecutionContext executionContext, ReadStream<Buffer> readStream, Handler<ProxyConnection> connectionHandler) {
 
-        final AmqpConnection rabbitMQConnection = new AmqpConnection(executionContext, configuration);
+        final GraviteeAmqpConnection rabbitMQConnection = new GraviteeAmqpConnection(executionContext, configuration);
 
         // Return connection to backend
         connectionHandler.handle(rabbitMQConnection);

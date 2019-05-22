@@ -15,7 +15,6 @@
  */
 package io.gravitee.plugins.rabbitmq;
 
-import io.vertx.amqpbridge.AmqpBridge;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.MessageConsumer;
 import org.junit.Test;

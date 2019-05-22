@@ -49,7 +49,7 @@
         <!-- Provided scope -->
         <dependency>
             <groupId>io.vertx</groupId>
-            <artifactId>vertx-amqp-bridge</artifactId>
+            <artifactId>vertx-amqp-client</artifactId>
             <version>3.7.0</version>
         </dependency>
         <dependency>
