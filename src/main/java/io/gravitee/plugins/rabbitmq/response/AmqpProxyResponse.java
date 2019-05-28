@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugins.rabbitmq;
+package io.gravitee.plugins.rabbitmq.response;
 
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -27,28 +27,35 @@ import io.vertx.ext.amqp.AmqpMessage;
 
 public class AmqpProxyResponse implements ProxyResponse {
 
-    private Handler<Buffer> bodyHandler;
-    private Handler<Void> endHandler;
+    protected Handler<Buffer> bodyHandler;
+    protected Handler<Void> endHandler;
+    private final HttpHeaders headers = new HttpHeaders();
 
-    private AmqpMessage asyncResult;
+    protected String asyncResult;
+    private Buffer buffer;
 
-    AmqpProxyResponse(AmqpMessage asyncResult) {
-        this.asyncResult = asyncResult;
+    public AmqpProxyResponse(String asyncResult) {
+        this.asyncResult = asyncResult ;
+        init();
+    }
+
+    public AmqpProxyResponse() {
+        init();
+    }
+
+    protected void init() {
+        buffer = Buffer.buffer(this.asyncResult);
+        headers.set(HttpHeaders.CONTENT_LENGTH, Integer.toString(buffer.length()));
+        headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
     }
 
     @Override
     public int status() {
-        if (!asyncResult.isBodyNull()) {
-            return 200;
-        }
-
-        return 500;
+        return 200;
     }
 
     @Override
     public HttpHeaders headers() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
         return headers;
     }
 
@@ -66,11 +73,7 @@ public class AmqpProxyResponse implements ProxyResponse {
 
     @Override
     public ReadStream<Buffer> resume() {
-        if (!asyncResult.isBodyNull()) {
-            this.bodyHandler.handle(Buffer.buffer(asyncResult.bodyAsString()));
-        }
-
-        endHandler.handle(null);
+        this.bodyHandler.handle(buffer);
         return this;
     }
 }

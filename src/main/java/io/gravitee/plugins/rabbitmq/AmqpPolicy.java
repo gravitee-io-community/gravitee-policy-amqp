@@ -23,9 +23,12 @@ import io.gravitee.policy.api.PolicyChain;
 import io.gravitee.policy.api.PolicyResult;
 import io.gravitee.policy.api.annotations.OnRequest;
 import io.gravitee.policy.api.annotations.OnResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("unused")
 public class AmqpPolicy {
+    private static final Logger logger = LoggerFactory.getLogger(AmqpPolicy.class);
 
     /**
      * The associated configuration to this RabbitMQ Policy
@@ -43,15 +46,18 @@ public class AmqpPolicy {
 
     @OnRequest
     public void onRequest(Request request, Response response, ExecutionContext executionContext, PolicyChain policyChain) {
+        logger.info("onRequest");
 
         executionContext.setAttribute(ExecutionContext.ATTR_INVOKER, new AmqpConnectionInvoker(configuration));
 
         // Finally continue chaining
         policyChain.doNext(request, response);
+        logger.info("policyChain.doNext");
     }
 
     @OnResponse
     public void onResponse(Request request, Response response, PolicyChain policyChain) {
+        logger.info("onResponse");
         if (isASuccessfulResponse(response)) {
             policyChain.doNext(request, response);
         } else {

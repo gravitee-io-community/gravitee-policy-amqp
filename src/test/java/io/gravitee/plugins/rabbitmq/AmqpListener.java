@@ -44,13 +44,7 @@ public class AmqpListener {
                         }
                         AmqpSender sender = done.result();
 
-                        try {
-                            Thread.sleep(500);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-
-                        sender.sendWithAck(AmqpMessage.create().withBody("hello from random").id(msg.id()).build(), acked -> {
+                        sender.sendWithAck(AmqpMessage.create().withBody("hello from random. Echo: " + msg.bodyAsString()).id(msg.id()).build(), acked -> {
                             if (acked.succeeded()) {
                                 System.out.println("Reply Message accepted");
                             } else {
@@ -62,8 +56,6 @@ public class AmqpListener {
                 done -> {
                     if (done.failed()) {
                         System.out.println("Unable to create receiver");
-                    } else {
-                        AmqpReceiver receiver = done.result();
                     }
                 }
         );
@@ -80,7 +72,7 @@ public class AmqpListener {
 
             String corId = UUID.randomUUID().toString();
             System.out.println("CorID: " + corId);
-
+/*
 // CLIENT
             connection.createSender("random", done -> {
                 if (done.failed()) {
@@ -118,9 +110,8 @@ public class AmqpListener {
                     e.printStackTrace();
                 }
             });
-
 //END CLIENT
-
+*/
         });
 
 

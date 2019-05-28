@@ -21,24 +21,20 @@ import io.gravitee.gateway.api.handler.Handler;
 import io.gravitee.gateway.api.proxy.ProxyConnection;
 import io.gravitee.gateway.api.proxy.ProxyResponse;
 import io.gravitee.gateway.api.stream.WriteStream;
+import io.gravitee.plugins.rabbitmq.response.AmqpProxyResponse;
+import io.gravitee.plugins.rabbitmq.response.FailedAmqpProxyResponse;
 import io.vertx.core.Vertx;
-import io.vertx.core.eventbus.MessageProducer;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.amqp.AmqpClient;
-import io.vertx.ext.amqp.AmqpClientOptions;
-import io.vertx.ext.amqp.AmqpConnection;
-import io.vertx.ext.amqp.AmqpMessage;
+import io.vertx.ext.amqp.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
 public class GraviteeAmqpConnection implements ProxyConnection {
-
     private static final Logger logger = LoggerFactory.getLogger(GraviteeAmqpConnection.class);
+    public static final String DEFAULT_RESPONSE = "{\"result\":true}";
 
-    //private AmqpBridge amqpBridge;
-    private AmqpClient client;
+    private AmqpConnectionManager connectionManager;
 
     private Buffer content;
 
@@ -46,16 +42,20 @@ public class GraviteeAmqpConnection implements ProxyConnection {
 
     private AmqpPolicyConfiguration configuration;
 
-    GraviteeAmqpConnection(ExecutionContext executionContext, AmqpPolicyConfiguration configuration) {
+    GraviteeAmqpConnection(ExecutionContext executionContext, AmqpPolicyConfiguration configuration, AmqpConnectionManager connectionManager) {
         this.configuration = configuration;
-        Vertx vertx = executionContext.getComponent(Vertx.class);
-        AmqpClientOptions options = new AmqpClientOptions()
-                .setHost(configuration.getAmqpServerHostname())
-                .setPort(configuration.getAmqpServerPort())
-                .setUsername(configuration.getAmqpServerUsername())
-                .setPassword(configuration.getAmqpServerPassword());
+        this.connectionManager = connectionManager;
 
-        this.client = AmqpClient.create(vertx, options);
+        Vertx vertx = executionContext.getComponent(Vertx.class);
+//        AmqpClientOptions options = new AmqpClientOptions()
+//                .setHost(configuration.getAmqpServerHostname())
+//                .setPort(configuration.getAmqpServerPort())
+//                .setUsername(configuration.getAmqpServerUsername())
+//                .setPassword(configuration.getAmqpServerPassword());
+//
+//        this.client = AmqpClient.create(vertx, options);
+
+        connectionManager.addConfiguration(vertx, configuration);
     }
 
     @Override
@@ -69,71 +69,84 @@ public class GraviteeAmqpConnection implements ProxyConnection {
 
     @Override
     public void end() {
-
         logger.info("Sending connecting to amqp://{}:{}@{}:{}...",
                 configuration.getAmqpServerUsername(),
                 configuration.getAmqpServerPassword(),
                 configuration.getAmqpServerHostname(),
                 configuration.getAmqpServerPort());
 
-        // Start the bridge, then use the event loop thread to process things thereafter.
-        client.connect(res -> {
+        connectionManager.getConnection(configuration, res -> {
             if (!res.succeeded()) {
                 logger.error("Couldn't connect to AMQP server.");
+                responseHandler.handle(new FailedAmqpProxyResponse());
                 return;
             }
 
-            logger.info("Connected !!");
+            logger.info("Connected");
             AmqpConnection connection = res.result();
+            String corId = UUID.randomUUID().toString();
+            String replyQName = configuration.getQueue().concat("-reply");
+            String messageBody = (content != null) ? content.toString() : "";
 
-            // Set up a producer using the bridge, send a message with it.
+            if (configuration.isRequestResponse()) {
+                connection.createReceiver(replyQName,
+                        msg -> {
+                            // called on every received messages
+                            logger.info("random-reply: Received " + msg.bodyAsString() + " Id " + msg.id());
+                            sendSuccessfulResponse(msg.bodyAsString());
+                        },
+                        done2 -> {
+                            if (done2.failed()) {
+                                logger.error("Unable to create receiver");
+                                sendErrorResponse();
+                                return;
+                            }
+                            logger.info("Created receiver");
+                        }
+                );
+            }
 
-            connection.createDynamicReceiver(replyReceiver -> {
-                // We got a receiver, the address is provided by the broker
-                String replyToAddress = replyReceiver.result().address();
-                logger.info("replyToAddress: ", replyToAddress);
+            connection.createSender(configuration.getQueue(), done -> {
+                if (done.failed()) {
+                    logger.error("Unable to create a sender");
+                    sendErrorResponse();
+                    return;
+                }
+                AmqpSender sender = done.result();
+                logger.info("Sender created");
 
-                // Attach the handler receiving the reply
-                replyReceiver.result().handler(msg -> {
-                    logger.info("Got the reply! " + msg.bodyAsString());
-                    responseHandler.handle(new AmqpProxyResponse(msg));
-                    connection.close(done -> {});
-                });
-
-                // Create a sender and send the message:
-                connection.createSender(configuration.getQueue(), sender -> {
-                    sender.result().send(AmqpMessage.create()
-                            .replyTo(replyToAddress)
-                            .id("my-message-id")
-                            .withBody("This is my request").build());
-                });
+                //sender.sendWithAck(AmqpMessage.create().withBody("hello").replyTo("amq.rabbitmq.reply-to").id(corId).build(), acked -> {
+                try {
+                    sender.sendWithAck(AmqpMessage.create().withBody(messageBody).id(corId).replyTo(replyQName).build(), acked -> {
+                        if (!acked.succeeded()) {
+                            logger.error("Sent Message not accepted");
+                            sendErrorResponse();
+                            return;
+                        }
+                        logger.info("Message accepted");
+                        if (!configuration.isRequestResponse()) {
+                            sendSuccessfulResponse(DEFAULT_RESPONSE);
+                        }
+                    });
+                } catch (Exception e) {
+                    logger.error("Exception posting a message", e);
+                    sendErrorResponse();
+                }
             });
-
-//            MessageProducer<JsonObject> producer = amqpBridge.createProducer(configuration.getQueue());
-//
-//            JsonObject amqpMsgPayload = new JsonObject();
-//            JsonObject properties = new JsonObject();
-//            properties.put("reply-to", "amq.rabbitmq.reply-to");
-//            properties.put("correlation-id", corrId);
-//            amqpMsgPayload.put("body", "myStringContent");
-//            amqpMsgPayload.put("properties", properties);
-//
-//            logger.info("Sending message to queue: {}", configuration.getQueue());
-//            try {
-//                producer.send(amqpMsgPayload, response -> {
-//                    logger.info("Received {}", response.result().body());
-//                    try {
-//                        responseHandler.handle(new AmqpProxyResponse(response));
-//                    } catch (Exception e) {
-//                        logger.error("Response handler error", e);
-//                    }
-//                });
-//            } catch (Exception e) {
-//                logger.error("Producer send error", e);
-//            }
         });
+    }
 
+    private void sendSuccessfulResponse(String response) {
+        responseHandler.handle(new AmqpProxyResponse(response));
+        connectionManager.closeConnection(configuration);
+    }
 
+    private void sendErrorResponse() {
+        responseHandler.handle(new FailedAmqpProxyResponse());
+        connectionManager.closeConnection(configuration);
+//        connection[0].close(done -> {
+//            logger.info("Connection closed");
+//        });
     }
 
     @Override
