@@ -24,7 +24,7 @@ import io.gravitee.gateway.api.stream.WriteStream;
 import io.gravitee.plugins.rabbitmq.response.AmqpProxyResponse;
 import io.gravitee.plugins.rabbitmq.response.FailedAmqpProxyResponse;
 import io.vertx.core.Vertx;
-import io.vertx.ext.amqp.*;
+import io.vertx.amqp.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,14 +47,6 @@ public class GraviteeAmqpConnection implements ProxyConnection {
         this.connectionManager = connectionManager;
 
         Vertx vertx = executionContext.getComponent(Vertx.class);
-//        AmqpClientOptions options = new AmqpClientOptions()
-//                .setHost(configuration.getAmqpServerHostname())
-//                .setPort(configuration.getAmqpServerPort())
-//                .setUsername(configuration.getAmqpServerUsername())
-//                .setPassword(configuration.getAmqpServerPassword());
-//
-//        this.client = AmqpClient.create(vertx, options);
-
         connectionManager.addConfiguration(vertx, configuration);
     }
 
@@ -69,12 +61,6 @@ public class GraviteeAmqpConnection implements ProxyConnection {
 
     @Override
     public void end() {
-        logger.info("Sending connecting to amqp://{}:{}@{}:{}...",
-                configuration.getAmqpServerUsername(),
-                configuration.getAmqpServerPassword(),
-                configuration.getAmqpServerHostname(),
-                configuration.getAmqpServerPort());
-
         connectionManager.getConnection(configuration, res -> {
             if (!res.succeeded()) {
                 logger.error("Couldn't connect to AMQP server.");
@@ -92,7 +78,11 @@ public class GraviteeAmqpConnection implements ProxyConnection {
                 connection.createReceiver(replyQName,
                         msg -> {
                             // called on every received messages
-                            logger.info("random-reply: Received " + msg.bodyAsString() + " Id " + msg.id());
+                            logger.info(replyQName + ": Received " + msg.bodyAsString() + " Id " + msg.id() + " corID: " + msg.correlationId());
+                            if (!corId.equals(msg.correlationId())) {
+                                logger.info("Ignoring incoming message, wrong correlationId");
+                                return;
+                            }
                             sendSuccessfulResponse(msg.bodyAsString());
                         },
                         done2 -> {
@@ -113,17 +103,24 @@ public class GraviteeAmqpConnection implements ProxyConnection {
                     return;
                 }
                 AmqpSender sender = done.result();
-                logger.info("Sender created");
+                logger.info("Sender created, message: " + messageBody);
 
-                //sender.sendWithAck(AmqpMessage.create().withBody("hello").replyTo("amq.rabbitmq.reply-to").id(corId).build(), acked -> {
+                //amq.rabbitmq.reply-to
                 try {
-                    sender.sendWithAck(AmqpMessage.create().withBody(messageBody).id(corId).replyTo(replyQName).build(), acked -> {
+                    AmqpMessage msg = AmqpMessage.create()
+                            .withBody(messageBody)
+                            .correlationId(corId)
+                            .replyTo(replyQName)
+                            .build();
+                    logger.info("Cor id: " + msg.correlationId());
+                    sender.sendWithAck(msg, acked -> {
                         if (!acked.succeeded()) {
                             logger.error("Sent Message not accepted");
                             sendErrorResponse();
                             return;
                         }
-                        logger.info("Message accepted");
+                        logger.info("Message accepted, corId: " + corId);
+
                         if (!configuration.isRequestResponse()) {
                             sendSuccessfulResponse(DEFAULT_RESPONSE);
                         }
@@ -144,9 +141,6 @@ public class GraviteeAmqpConnection implements ProxyConnection {
     private void sendErrorResponse() {
         responseHandler.handle(new FailedAmqpProxyResponse());
         connectionManager.closeConnection(configuration);
-//        connection[0].close(done -> {
-//            logger.info("Connection closed");
-//        });
     }
 
     @Override

@@ -31,10 +31,4 @@ public class FailedAmqpProxyResponse extends AmqpProxyResponse {
         return 500;
     }
 
-    @Override
-    public ReadStream<Buffer> resume() {
-        endHandler.handle(null);
-        return this;
-    }
-
 }

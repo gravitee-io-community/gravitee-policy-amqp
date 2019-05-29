@@ -15,12 +15,14 @@
  */
 package io.gravitee.plugins.rabbitmq;
 
+import io.vertx.amqp.AmqpClient;
+import io.vertx.amqp.AmqpClientOptions;
+import io.vertx.amqp.AmqpMessage;
+import io.vertx.amqp.AmqpSender;
 import io.vertx.core.Vertx;
-import io.vertx.ext.amqp.*;
-
-import java.util.UUID;
 
 public class AmqpListener {
+
     public static void main(String[] args) throws Exception {
 
         AmqpClientOptions options = new AmqpClientOptions()
@@ -35,7 +37,7 @@ public class AmqpListener {
         client.createReceiver("random",
                 msg -> {
                     // called on every received messages
-                    System.out.println("random Received " + msg.bodyAsString() + " Id " + msg.id());
+                    System.out.println("random Received " + msg.bodyAsString() + " Id " + msg.id()+ " corID: " + msg.correlationId());
 
                     client.createSender(msg.replyTo(), done -> {
                         if (done.failed()) {
@@ -43,10 +45,14 @@ public class AmqpListener {
                             return;
                         }
                         AmqpSender sender = done.result();
+                        AmqpMessage replyMessage = AmqpMessage.create()
+                                .withBody("hello from random. Echo: " + msg.bodyAsString())
+                                .correlationId(msg.correlationId())
+                                .build();
 
-                        sender.sendWithAck(AmqpMessage.create().withBody("hello from random. Echo: " + msg.bodyAsString()).id(msg.id()).build(), acked -> {
+                        sender.sendWithAck(replyMessage, acked -> {
                             if (acked.succeeded()) {
-                                System.out.println("Reply Message accepted");
+                                System.out.println("Reply Message accepted, corId: " + replyMessage.correlationId());
                             } else {
                                 System.out.println("Message not accepted");
                             }
@@ -56,12 +62,17 @@ public class AmqpListener {
                 done -> {
                     if (done.failed()) {
                         System.out.println("Unable to create receiver");
+                        return;
                     }
+                    System.out.println("Listening for messages...");
                 }
         );
 
 // END SERVer
 
+
+/*
+// CLIENT
         client.connect(ar -> {
             if (ar.failed()) {
                 System.out.println("Unable to connect to the broker");
@@ -72,8 +83,7 @@ public class AmqpListener {
 
             String corId = UUID.randomUUID().toString();
             System.out.println("CorID: " + corId);
-/*
-// CLIENT
+
             connection.createSender("random", done -> {
                 if (done.failed()) {
                     System.out.println("Unable to create a sender");
@@ -110,9 +120,9 @@ public class AmqpListener {
                     e.printStackTrace();
                 }
             });
+        });
 //END CLIENT
 */
-        });
 
 
     }

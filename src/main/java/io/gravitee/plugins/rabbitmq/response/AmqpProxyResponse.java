@@ -21,9 +21,7 @@ import io.gravitee.gateway.api.buffer.Buffer;
 import io.gravitee.gateway.api.handler.Handler;
 import io.gravitee.gateway.api.proxy.ProxyResponse;
 import io.gravitee.gateway.api.stream.ReadStream;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.eventbus.Message;
-import io.vertx.ext.amqp.AmqpMessage;
+import io.gravitee.plugins.rabbitmq.utils.StringUtils;
 
 public class AmqpProxyResponse implements ProxyResponse {
 
@@ -44,9 +42,9 @@ public class AmqpProxyResponse implements ProxyResponse {
     }
 
     protected void init() {
-        buffer = Buffer.buffer(this.asyncResult);
+        buffer = Buffer.buffer(asyncResult);
         headers.set(HttpHeaders.CONTENT_LENGTH, Integer.toString(buffer.length()));
-        headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+        headers.set(HttpHeaders.CONTENT_TYPE, getContentType(asyncResult));
     }
 
     @Override
@@ -73,7 +71,22 @@ public class AmqpProxyResponse implements ProxyResponse {
 
     @Override
     public ReadStream<Buffer> resume() {
-        this.bodyHandler.handle(buffer);
+        if (buffer != null) {
+            bodyHandler.handle(buffer);
+        }
+
+        endHandler.handle(null);
         return this;
     }
+
+    protected static String getContentType(String content) {
+        if (StringUtils.isJSON(content)) {
+            return MediaType.APPLICATION_JSON;
+        }
+        if (StringUtils.isXML(content)) {
+            return MediaType.TEXT_XML;
+        }
+        return MediaType.TEXT_PLAIN;
+    }
+
 }

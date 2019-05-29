@@ -48,11 +48,6 @@
     <dependencies>
         <!-- Provided scope -->
         <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-amqp-client</artifactId>
-            <version>3.7.0</version>
-        </dependency>
-        <dependency>
             <groupId>io.gravitee.gateway</groupId>
             <artifactId>gravitee-gateway-api</artifactId>
             <version>${gravitee-gateway-api.version}</version>
@@ -78,6 +73,12 @@
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-amqp-client</artifactId>
+            <version>3.7.1</version>
         </dependency>
 
         <!-- Test scope -->
@@ -120,6 +121,7 @@
             <version>3.7.1</version>
             <scope>test</scope>
         </dependency>
+
     </dependencies>
 
     <build>

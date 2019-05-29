@@ -19,9 +19,9 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.ext.amqp.AmqpClient;
-import io.vertx.ext.amqp.AmqpClientOptions;
-import io.vertx.ext.amqp.AmqpConnection;
+import io.vertx.amqp.AmqpClient;
+import io.vertx.amqp.AmqpClientOptions;
+import io.vertx.amqp.AmqpConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,6 +67,12 @@ public class AmqpConnectionManager {
         }
 
         AmqpClient client = clients.get(configuration);
+
+        logger.info("Connecting to amqp://{}:{}@{}:{}...",
+                configuration.getAmqpServerUsername(),
+                configuration.getAmqpServerPassword(),
+                configuration.getAmqpServerHostname(),
+                configuration.getAmqpServerPort());
 
         client.connect(res -> {
             if (!res.succeeded()) {
