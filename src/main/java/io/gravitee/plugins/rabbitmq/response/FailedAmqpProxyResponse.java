@@ -22,8 +22,7 @@ public class FailedAmqpProxyResponse extends AmqpProxyResponse {
     public static final String FAILED_RESPONSE_STRING = "{\"result\":false}";
 
     public FailedAmqpProxyResponse() {
-        this.asyncResult = FAILED_RESPONSE_STRING;
-        init();
+        super(FAILED_RESPONSE_STRING);
     }
 
     @Override

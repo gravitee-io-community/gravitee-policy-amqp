@@ -62,7 +62,7 @@ public class GraviteeAmqpConnection implements ProxyConnection {
     @Override
     public void end() {
         connectionManager.getConnection(configuration, res -> {
-            if (!res.succeeded()) {
+            if (res.failed()) {
                 logger.error("Couldn't connect to AMQP server.");
                 responseHandler.handle(new FailedAmqpProxyResponse());
                 return;
@@ -114,7 +114,7 @@ public class GraviteeAmqpConnection implements ProxyConnection {
                             .build();
                     logger.info("Cor id: " + msg.correlationId());
                     sender.sendWithAck(msg, acked -> {
-                        if (!acked.succeeded()) {
+                        if (acked.failed()) {
                             logger.error("Sent Message not accepted");
                             sendErrorResponse();
                             return;

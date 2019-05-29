@@ -37,10 +37,6 @@ public class AmqpProxyResponse implements ProxyResponse {
         init();
     }
 
-    public AmqpProxyResponse() {
-        init();
-    }
-
     protected void init() {
         buffer = Buffer.buffer(asyncResult);
         headers.set(HttpHeaders.CONTENT_LENGTH, Integer.toString(buffer.length()));
