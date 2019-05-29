@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugins.rabbitmq;
+package io.gravitee.plugins.rabbitmq.response;
 
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -21,35 +21,35 @@ import io.gravitee.gateway.api.buffer.Buffer;
 import io.gravitee.gateway.api.handler.Handler;
 import io.gravitee.gateway.api.proxy.ProxyResponse;
 import io.gravitee.gateway.api.stream.ReadStream;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.eventbus.Message;
+import io.gravitee.plugins.rabbitmq.utils.StringUtils;
 
 public class AmqpProxyResponse implements ProxyResponse {
 
-    private Handler<Buffer> bodyHandler;
-    private Handler<Void> endHandler;
+    protected Handler<Buffer> bodyHandler;
+    protected Handler<Void> endHandler;
+    private final HttpHeaders headers = new HttpHeaders();
 
-    private AsyncResult<Message<Object>> asyncResult;
+    protected String asyncResult;
+    private Buffer buffer;
 
-    AmqpProxyResponse(AsyncResult<Message<Object>> asyncResult) {
-        this.asyncResult = asyncResult;
+    public AmqpProxyResponse(String asyncResult) {
+        this.asyncResult = asyncResult ;
+        init();
+    }
+
+    protected void init() {
+        buffer = Buffer.buffer(asyncResult);
+        headers.set(HttpHeaders.CONTENT_LENGTH, Integer.toString(buffer.length()));
+        headers.set(HttpHeaders.CONTENT_TYPE, getContentType(asyncResult));
     }
 
     @Override
     public int status() {
-        if (asyncResult.succeeded()) {
-            return 200;
-        } else if (asyncResult.failed()) {
-            return 500;
-        }
-
-        return 500;
+        return 200;
     }
 
     @Override
     public HttpHeaders headers() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
         return headers;
     }
 
@@ -67,13 +67,22 @@ public class AmqpProxyResponse implements ProxyResponse {
 
     @Override
     public ReadStream<Buffer> resume() {
-        if (asyncResult.succeeded()
-                && asyncResult.result() != null
-                && asyncResult.result().body() != null) {
-            this.bodyHandler.handle(Buffer.buffer(asyncResult.result().body().toString()));
+        if (buffer != null) {
+            bodyHandler.handle(buffer);
         }
 
         endHandler.handle(null);
         return this;
     }
+
+    protected static String getContentType(String content) {
+        if (StringUtils.isJSON(content)) {
+            return MediaType.APPLICATION_JSON;
+        }
+        if (StringUtils.isXML(content)) {
+            return MediaType.TEXT_XML;
+        }
+        return MediaType.TEXT_PLAIN;
+    }
+
 }

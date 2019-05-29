@@ -30,6 +30,8 @@ public class AmqpPolicyConfiguration implements PolicyConfiguration {
 
     private String amqpServerPassword = "guest";
 
+    private boolean requestResponse = false;
+
     public void setQueue(String queue) {
         this.queue = queue;
     }
@@ -68,5 +70,36 @@ public class AmqpPolicyConfiguration implements PolicyConfiguration {
 
     public String getAmqpServerUsername() {
         return amqpServerUsername;
+    }
+
+    public boolean isRequestResponse() {
+        return requestResponse;
+    }
+
+    public void setRequestResponse(boolean requestResponse) {
+        this.requestResponse = requestResponse;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        AmqpPolicyConfiguration that = (AmqpPolicyConfiguration) o;
+
+        if (amqpServerPort != that.amqpServerPort) return false;
+        if (!amqpServerHostname.equals(that.amqpServerHostname)) return false;
+        if (amqpServerUsername != null ? !amqpServerUsername.equals(that.amqpServerUsername) : that.amqpServerUsername != null)
+            return false;
+        return amqpServerPassword != null ? amqpServerPassword.equals(that.amqpServerPassword) : that.amqpServerPassword == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = amqpServerHostname.hashCode();
+        result = 31 * result + amqpServerPort;
+        result = 31 * result + (amqpServerUsername != null ? amqpServerUsername.hashCode() : 0);
+        result = 31 * result + (amqpServerPassword != null ? amqpServerPassword.hashCode() : 0);
+        return result;
     }
 }

@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugins.rabbitmq;
+package io.gravitee.plugins.rabbitmq.response;
 
-import io.vertx.amqpbridge.AmqpBridge;
-import io.vertx.core.Vertx;
-import io.vertx.core.eventbus.MessageConsumer;
-import org.junit.Test;
+import io.gravitee.gateway.api.buffer.Buffer;
+import io.gravitee.gateway.api.stream.ReadStream;
 
-public class RabbitMQPolicyTest {
+public class FailedAmqpProxyResponse extends AmqpProxyResponse {
+    public static final String FAILED_RESPONSE_STRING = "{\"result\":false}";
 
-    @Test
-    public void testOnRequest() throws Exception {
-
-
+    public FailedAmqpProxyResponse() {
+        super(FAILED_RESPONSE_STRING);
     }
 
-    @Test
-    public void testOnResponse() throws Exception {
-
+    @Override
+    public int status() {
+        return 500;
     }
 
 }
