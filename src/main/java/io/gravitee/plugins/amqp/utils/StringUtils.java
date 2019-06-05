@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugins.rabbitmq.utils;
+package io.gravitee.plugins.amqp.utils;
 
-import io.gravitee.plugins.rabbitmq.json.JSONArray;
-import io.gravitee.plugins.rabbitmq.json.JSONException;
-import io.gravitee.plugins.rabbitmq.json.JSONObject;
+import io.gravitee.plugins.amqp.json.JSONArray;
+import io.gravitee.plugins.amqp.json.JSONException;
+import io.gravitee.plugins.amqp.json.JSONObject;
 import org.w3c.dom.Document;
 
 import javax.xml.parsers.DocumentBuilder;

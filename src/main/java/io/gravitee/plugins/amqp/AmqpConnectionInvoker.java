@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugins.rabbitmq;
+package io.gravitee.plugins.amqp;
 
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Invoker;
@@ -21,6 +21,7 @@ import io.gravitee.gateway.api.buffer.Buffer;
 import io.gravitee.gateway.api.handler.Handler;
 import io.gravitee.gateway.api.proxy.ProxyConnection;
 import io.gravitee.gateway.api.stream.ReadStream;
+import io.gravitee.plugins.amqp.connection.AmqpConnectionManager;
 
 public class AmqpConnectionInvoker implements Invoker {
 

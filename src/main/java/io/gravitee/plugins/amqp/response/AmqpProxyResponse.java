@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugins.rabbitmq.response;
+package io.gravitee.plugins.amqp.response;
 
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -21,7 +21,7 @@ import io.gravitee.gateway.api.buffer.Buffer;
 import io.gravitee.gateway.api.handler.Handler;
 import io.gravitee.gateway.api.proxy.ProxyResponse;
 import io.gravitee.gateway.api.stream.ReadStream;
-import io.gravitee.plugins.rabbitmq.utils.StringUtils;
+import io.gravitee.plugins.amqp.utils.StringUtils;
 
 public class AmqpProxyResponse implements ProxyResponse {
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugins.rabbitmq.json;
+package io.gravitee.plugins.amqp.json;
 
 /*
 Copyright (c) 2002 JSON.org
@@ -39,49 +39,54 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.Properties;
-
 /**
- * Converts a Property file data into JSONObject and back.
+ * The HTTPTokener extends the JSONTokener to provide additional methods
+ * for the parsing of HTTP headers.
  * @author JSON.org
- * @version 2015-05-05
+ * @version 2015-12-09
  */
-public class Property {
+public class HTTPTokener extends JSONTokener {
+
     /**
-     * Converts a property file object into a JSONObject. The property file object is a table of name value pairs.
-     * @param properties java.util.Properties
-     * @return JSONObject
-     * @throws JSONException
+     * Construct an HTTPTokener from a string.
+     * @param string A source string.
      */
-    public static JSONObject toJSONObject(Properties properties) throws JSONException {
-        JSONObject jo = new JSONObject();
-        if (properties != null && !properties.isEmpty()) {
-            Enumeration<?> enumProperties = properties.propertyNames();
-            while(enumProperties.hasMoreElements()) {
-                String name = (String)enumProperties.nextElement();
-                jo.put(name, properties.getProperty(name));
-            }
-        }
-        return jo;
+    public HTTPTokener(String string) {
+        super(string);
     }
 
+
     /**
-     * Converts the JSONObject into a property file object.
-     * @param jo JSONObject
-     * @return java.util.Properties
+     * Get the next token or string. This is used in parsing HTTP headers.
      * @throws JSONException
+     * @return A String.
      */
-    public static Properties toProperties(JSONObject jo)  throws JSONException {
-        Properties  properties = new Properties();
-        if (jo != null) {
-            Iterator<String> keys = jo.keys();
-            while (keys.hasNext()) {
-                String name = keys.next();
-                properties.put(name, jo.getString(name));
+    public String nextToken() throws JSONException {
+        char c;
+        char q;
+        StringBuilder sb = new StringBuilder();
+        do {
+            c = next();
+        } while (Character.isWhitespace(c));
+        if (c == '"' || c == '\'') {
+            q = c;
+            for (;;) {
+                c = next();
+                if (c < ' ') {
+                    throw syntaxError("Unterminated string.");
+                }
+                if (c == q) {
+                    return sb.toString();
+                }
+                sb.append(c);
             }
         }
-        return properties;
+        for (;;) {
+            if (c == 0 || Character.isWhitespace(c)) {
+                return sb.toString();
+            }
+            sb.append(c);
+            c = next();
+        }
     }
 }

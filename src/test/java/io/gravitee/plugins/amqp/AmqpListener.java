@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugins.rabbitmq;
+package io.gravitee.plugins.amqp;
 
 import io.vertx.amqp.AmqpClient;
 import io.vertx.amqp.AmqpClientOptions;

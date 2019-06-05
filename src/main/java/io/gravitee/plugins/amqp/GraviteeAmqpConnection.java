@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugins.rabbitmq;
+package io.gravitee.plugins.amqp;
 
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.buffer.Buffer;
@@ -21,8 +21,9 @@ import io.gravitee.gateway.api.handler.Handler;
 import io.gravitee.gateway.api.proxy.ProxyConnection;
 import io.gravitee.gateway.api.proxy.ProxyResponse;
 import io.gravitee.gateway.api.stream.WriteStream;
-import io.gravitee.plugins.rabbitmq.response.AmqpProxyResponse;
-import io.gravitee.plugins.rabbitmq.response.FailedAmqpProxyResponse;
+import io.gravitee.plugins.amqp.connection.AmqpConnectionManager;
+import io.gravitee.plugins.amqp.response.AmqpProxyResponse;
+import io.gravitee.plugins.amqp.response.FailedAmqpProxyResponse;
 import io.vertx.core.Vertx;
 import io.vertx.amqp.*;
 import org.slf4j.Logger;
@@ -68,7 +69,7 @@ public class GraviteeAmqpConnection implements ProxyConnection {
                 return;
             }
 
-            logger.info("Connected");
+            logger.debug("Connected");
             AmqpConnection connection = res.result();
             String corId = UUID.randomUUID().toString();
             String replyQName = configuration.getQueue().concat("-reply");
@@ -78,9 +79,9 @@ public class GraviteeAmqpConnection implements ProxyConnection {
                 connection.createReceiver(replyQName,
                         msg -> {
                             // called on every received messages
-                            logger.info(replyQName + ": Received " + msg.bodyAsString() + " Id " + msg.id() + " corID: " + msg.correlationId());
+                            logger.debug(replyQName + ": Received " + msg.bodyAsString() + " Id " + msg.id() + " corID: " + msg.correlationId());
                             if (!corId.equals(msg.correlationId())) {
-                                logger.info("Ignoring incoming message, wrong correlationId");
+                                logger.debug("Ignoring incoming message, wrong correlationId");
                                 return;
                             }
                             sendSuccessfulResponse(msg.bodyAsString());
@@ -91,7 +92,7 @@ public class GraviteeAmqpConnection implements ProxyConnection {
                                 sendErrorResponse();
                                 return;
                             }
-                            logger.info("Created receiver");
+                            logger.debug("Created receiver");
                         }
                 );
             }
@@ -103,7 +104,7 @@ public class GraviteeAmqpConnection implements ProxyConnection {
                     return;
                 }
                 AmqpSender sender = done.result();
-                logger.info("Sender created, message: " + messageBody);
+                logger.debug("Sender created, message: " + messageBody);
 
                 //amq.rabbitmq.reply-to
                 try {
@@ -112,14 +113,14 @@ public class GraviteeAmqpConnection implements ProxyConnection {
                             .correlationId(corId)
                             .replyTo(replyQName)
                             .build();
-                    logger.info("Cor id: " + msg.correlationId());
+                    logger.debug("Cor id: " + msg.correlationId());
                     sender.sendWithAck(msg, acked -> {
                         if (acked.failed()) {
                             logger.error("Sent Message not accepted");
                             sendErrorResponse();
                             return;
                         }
-                        logger.info("Message accepted, corId: " + corId);
+                        logger.debug("Message accepted, corId: " + corId);
 
                         if (!configuration.isRequestResponse()) {
                             sendSuccessfulResponse(DEFAULT_RESPONSE);

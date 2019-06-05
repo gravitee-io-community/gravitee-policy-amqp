@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugins.rabbitmq;
+package io.gravitee.plugins.amqp;
 
 import io.gravitee.common.util.ServiceLoaderHelper;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.buffer.Buffer;
 import io.gravitee.gateway.api.buffer.BufferFactory;
 import io.gravitee.gateway.api.proxy.ProxyResponse;
-import io.gravitee.plugins.rabbitmq.response.AmqpProxyResponse;
-import io.gravitee.plugins.rabbitmq.response.FailedAmqpProxyResponse;
+import io.gravitee.plugins.amqp.connection.AmqpConnectionManager;
+import io.gravitee.plugins.amqp.response.AmqpProxyResponse;
+import io.gravitee.plugins.amqp.response.FailedAmqpProxyResponse;
 import io.vertx.amqp.AmqpConnection;
 import io.vertx.amqp.AmqpMessage;
 import io.vertx.amqp.AmqpSender;

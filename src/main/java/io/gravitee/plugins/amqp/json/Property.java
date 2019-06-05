@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugins.rabbitmq.json;
+package io.gravitee.plugins.amqp.json;
 
 /*
 Copyright (c) 2002 JSON.org
@@ -39,66 +39,49 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.Properties;
 
 /**
- * Convert a web browser cookie list string to a JSONObject and back.
+ * Converts a Property file data into JSONObject and back.
  * @author JSON.org
- * @version 2015-12-09
+ * @version 2015-05-05
  */
-public class CookieList {
-
+public class Property {
     /**
-     * Convert a cookie list into a JSONObject. A cookie list is a sequence
-     * of name/value pairs. The names are separated from the values by '='.
-     * The pairs are separated by ';'. The names and the values
-     * will be unescaped, possibly converting '+' and '%' sequences.
-     *
-     * To add a cookie to a cooklist,
-     * cookielistJSONObject.put(cookieJSONObject.getString("name"),
-     *     cookieJSONObject.getString("value"));
-     * @param string  A cookie list string
-     * @return A JSONObject
+     * Converts a property file object into a JSONObject. The property file object is a table of name value pairs.
+     * @param properties java.util.Properties
+     * @return JSONObject
      * @throws JSONException
      */
-    public static JSONObject toJSONObject(String string) throws JSONException {
+    public static JSONObject toJSONObject(Properties properties) throws JSONException {
         JSONObject jo = new JSONObject();
-        JSONTokener x = new JSONTokener(string);
-        while (x.more()) {
-            String name = Cookie.unescape(x.nextTo('='));
-            x.next('=');
-            jo.put(name, Cookie.unescape(x.nextTo(';')));
-            x.next();
+        if (properties != null && !properties.isEmpty()) {
+            Enumeration<?> enumProperties = properties.propertyNames();
+            while(enumProperties.hasMoreElements()) {
+                String name = (String)enumProperties.nextElement();
+                jo.put(name, properties.getProperty(name));
+            }
         }
         return jo;
     }
 
     /**
-     * Convert a JSONObject into a cookie list. A cookie list is a sequence
-     * of name/value pairs. The names are separated from the values by '='.
-     * The pairs are separated by ';'. The characters '%', '+', '=', and ';'
-     * in the names and values are replaced by "%hh".
-     * @param jo A JSONObject
-     * @return A cookie list string
+     * Converts the JSONObject into a property file object.
+     * @param jo JSONObject
+     * @return java.util.Properties
      * @throws JSONException
      */
-    public static String toString(JSONObject jo) throws JSONException {
-        boolean             b = false;
-        Iterator<String>    keys = jo.keys();
-        String              string;
-        StringBuilder sb = new StringBuilder();
-        while (keys.hasNext()) {
-            string = keys.next();
-            if (!jo.isNull(string)) {
-                if (b) {
-                    sb.append(';');
-                }
-                sb.append(Cookie.escape(string));
-                sb.append("=");
-                sb.append(Cookie.escape(jo.getString(string)));
-                b = true;
+    public static Properties toProperties(JSONObject jo)  throws JSONException {
+        Properties  properties = new Properties();
+        if (jo != null) {
+            Iterator<String> keys = jo.keys();
+            while (keys.hasNext()) {
+                String name = keys.next();
+                properties.put(name, jo.getString(name));
             }
         }
-        return sb.toString();
+        return properties;
     }
 }

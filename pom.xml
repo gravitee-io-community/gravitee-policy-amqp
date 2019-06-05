@@ -20,12 +20,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.gravitee.plugins.rabbitmq</groupId>
-    <artifactId>gravitee-rabbitmq</artifactId>
+    <groupId>io.gravitee.plugins.amqp</groupId>
+    <artifactId>gravitee-policy-amqp</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
     <name>Gravitee.io APIM - Policy - AMQP</name>
-    <description>AMQP Policy</description>
+    <description>Gravitee AMQP Policy</description>
 
     <parent>
         <groupId>io.gravitee</groupId>

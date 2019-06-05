@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugins.rabbitmq.json;
+package io.gravitee.plugins.amqp.json;
 /**
  * The <code>JSONString</code> interface allows a <code>toJSONString()</code>
  * method so that a class can change the behavior of

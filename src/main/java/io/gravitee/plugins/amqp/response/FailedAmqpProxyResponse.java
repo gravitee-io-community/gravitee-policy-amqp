@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugins.rabbitmq.response;
-
-import io.gravitee.gateway.api.buffer.Buffer;
-import io.gravitee.gateway.api.stream.ReadStream;
+package io.gravitee.plugins.amqp.response;
 
 public class FailedAmqpProxyResponse extends AmqpProxyResponse {
     public static final String FAILED_RESPONSE_STRING = "{\"result\":false}";

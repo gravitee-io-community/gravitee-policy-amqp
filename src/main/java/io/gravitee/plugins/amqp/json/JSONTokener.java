@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.plugins.rabbitmq.json;
+package io.gravitee.plugins.amqp.json;
 
 import java.io.*;
 
