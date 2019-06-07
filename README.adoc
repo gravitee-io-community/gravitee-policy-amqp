@@ -30,4 +30,4 @@ If you want to use Request - Response functionality, enable corresponding checkb
 - Mock `AmqpClient` instead of `AmqpConnectionManager` There were some troubles with mocking Amqp Classes - solved now using `withoutAnnotations()` method.
 - Test with other MQs
 - Investigate problem with default connection.createAnonymousSender and connection.createDynamicReceiver in RabbitMQ for avoiding named response queues.
-
+- Multi-tenancy support - store `correlationIds` and response queue names in Redis
