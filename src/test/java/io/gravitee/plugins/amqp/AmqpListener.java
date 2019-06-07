@@ -33,7 +33,6 @@ public class AmqpListener {
 
         AmqpClient client = AmqpClient.create(Vertx.vertx(), options);
 
-// SERVer
         client.createReceiver("random",
                 msg -> {
                     // called on every received messages
@@ -67,63 +66,5 @@ public class AmqpListener {
                     System.out.println("Listening for messages...");
                 }
         );
-
-// END SERVer
-
-
-/*
-// CLIENT
-        client.connect(ar -> {
-            if (ar.failed()) {
-                System.out.println("Unable to connect to the broker");
-                return;
-            }
-            System.out.println("Connection succeeded");
-            AmqpConnection connection = ar.result();
-
-            String corId = UUID.randomUUID().toString();
-            System.out.println("CorID: " + corId);
-
-            connection.createSender("random", done -> {
-                if (done.failed()) {
-                    System.out.println("Unable to create a sender");
-                    return;
-                }
-                AmqpSender sender = done.result();
-                System.out.println("Sender created");
-
-                //sender.sendWithAck(AmqpMessage.create().withBody("hello").replyTo("amq.rabbitmq.reply-to").id(corId).build(), acked -> {
-                try {
-                    sender.sendWithAck(AmqpMessage.create().withBody("hello").id(corId).replyTo("random-reply").build(), acked -> {
-                        if (!acked.succeeded()) {
-                            System.out.println("Message not accepted");
-                            return;
-                        }
-                        System.out.println("Message accepted");
-
-                        connection.createReceiver("random-reply",
-                                msg -> {
-                                    // called on every received messages
-                                    System.out.println("random-reply: Received " + msg.bodyAsString() + " Id " + msg.id());
-                                },
-                                done2 -> {
-                                    if (done2.failed()) {
-                                        System.out.println("Unable to create receiver");
-                                    } else {
-                                        System.out.println("Created receiver");
-                                    }
-                                }
-                        );
-
-                    });
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-        });
-//END CLIENT
-*/
-
-
     }
 }
