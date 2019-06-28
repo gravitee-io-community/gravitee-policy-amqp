@@ -106,7 +106,7 @@ public class GraviteeAmqpConnectionTest {
         givenAMQPConnected();
         givenSender();
 
-        givenSuccessfulMessageSent(incomingMessage);
+        givenSuccessfulMessageSent(incomingMessage, false);
 
         Buffer buffer = factory.buffer(incomingMessage);
         proxtService.write(buffer);
@@ -126,7 +126,7 @@ public class GraviteeAmqpConnectionTest {
         givenSender();
         givenReceiver(responseMessage);
 
-        givenSuccessfulMessageSent(incomingMessage);
+        givenSuccessfulMessageSent(incomingMessage, true);
 
         Buffer buffer = factory.buffer(incomingMessage);
         proxtService.write(buffer);
@@ -223,11 +223,11 @@ public class GraviteeAmqpConnectionTest {
         return result;
     }
 
-    private void givenSuccessfulMessageSent(String incomingMessage) {
+    private void givenSuccessfulMessageSent(String incomingMessage, boolean isRequestResponse) {
         doAnswer(invocation -> {
             AmqpMessage msg = invocation.getArgument(0);
 
-            thenOutgoingMessageIsCorrect(incomingMessage, msg);
+            thenOutgoingMessageIsCorrect(incomingMessage, msg, isRequestResponse);
             currentCorrelationId = msg.correlationId();
 
             Handler<AsyncResult<AmqpConnection>> connectionHandler = invocation.getArgument(1);
@@ -236,9 +236,13 @@ public class GraviteeAmqpConnectionTest {
         }).when(sender).sendWithAck(any(), any());
     }
 
-    private void thenOutgoingMessageIsCorrect(String incomingMessage, AmqpMessage msg) {
+    private void thenOutgoingMessageIsCorrect(String incomingMessage, AmqpMessage msg, boolean isRequestResponse) {
         assertEquals(incomingMessage, msg.bodyAsString());
-        assertEquals(replyQName, msg.replyTo());
+        if (isRequestResponse) {
+            assertEquals(replyQName, msg.replyTo());
+        } else {
+            assertNull(msg.replyTo());
+        }
         assertNotNull(msg.correlationId());
     }
 

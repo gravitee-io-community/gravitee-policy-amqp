@@ -72,6 +72,7 @@ public class GraviteeAmqpConnection implements ProxyConnection {
             logger.debug("Connected");
             AmqpConnection connection = res.result();
             String corId = UUID.randomUUID().toString();
+            String msgId = UUID.randomUUID().toString();
             String replyQName = configuration.getQueue().concat("-reply");
             String messageBody = (content != null) ? content.toString() : "";
 
@@ -111,7 +112,8 @@ public class GraviteeAmqpConnection implements ProxyConnection {
                     AmqpMessage msg = AmqpMessage.create()
                             .withBody(messageBody)
                             .correlationId(corId)
-                            .replyTo(replyQName)
+                            .id(msgId)
+                            .replyTo(configuration.isRequestResponse() ? replyQName : null)
                             .build();
                     logger.debug("Cor id: " + msg.correlationId());
                     sender.sendWithAck(msg, acked -> {
